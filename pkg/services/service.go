@@ -24,10 +24,11 @@ func (tweetService TweetService) Save(ctx context.Context, tweet models.Tweet) (
 	return tweet, error
 }
 
-func (tweetService TweetService) Get(ctx context.Context, tweet models.Tweet) (error, models.Tweet) {
-	tweet.UID = uuid.New().String()
+func (tweetService TweetService) Get(ctx context.Context, uid string) (models.Tweet, error) {
 
-	error := tweetService.redisRepo.Save(ctx, tweet)
+	uid = "tweet:" + uid
 
-	return error, tweet
+	tweet, error := tweetService.redisRepo.Get(ctx, uid)
+
+	return tweet, error
 }

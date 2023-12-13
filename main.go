@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/erdemkosk/golang-x-kafka/pkg/models"
 	"github.com/erdemkosk/golang-x-kafka/pkg/repositories"
@@ -24,8 +24,16 @@ func main() {
 	})
 
 	app.Get("/tweet/:uid", func(c *fiber.Ctx) error {
-		fmt.Fprintf(c, "%s\n", c.Params("uid"))
-		return nil
+		uid := c.Params("uid")
+
+		tweet, err := tweetService.Get(c.Context(), uid)
+
+		if errors.Is(err, redis.Nil) {
+			return c.SendString("tweet not found")
+		} else if err != nil {
+			return c.SendString(err.Error())
+		}
+		return c.JSON(tweet)
 	})
 
 	app.Post("/tweet", func(c *fiber.Ctx) error {
