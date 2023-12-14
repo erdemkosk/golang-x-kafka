@@ -31,3 +31,15 @@ func (r Redis[T]) Get(ctx context.Context, key string) (T, error) {
 	json.Unmarshal(b, &t)
 	return t, nil
 }
+
+func (r Redis[T]) MGet(ctx context.Context, key ...string) ([]T, error) {
+	bb, err := r.rdb.WithContext(ctx).MGet(key...).Result()
+	if err != nil {
+		return nil, err
+	}
+	result := make([]T, len(key))
+	for i, b := range bb {
+		json.Unmarshal([]byte(b.(string)), &result[i])
+	}
+	return result, nil
+}
