@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/erdemkosk/golang-x-kafka/internal"
 	"github.com/erdemkosk/golang-x-kafka/pkg/models"
 	"github.com/erdemkosk/golang-x-kafka/pkg/repositories"
 	"github.com/erdemkosk/golang-x-kafka/pkg/services"
@@ -26,6 +27,8 @@ func main() {
 	tweetService := services.CreateTweetService(repositories.NewRedis[models.Tweet](rdb))
 	followerService := services.CreateFollowerService()
 	timelineService := services.CreateTimelineService(rdb)
+	kafkaWriter, closeWriter := internal.NewWriter[models.Tweet]("127.0.0.1:9092", "twitter.newTweets")
+	defer closeWriter()
 
 	// @Summary Get the home page
 	// @Description Retrieve the home page of the application
@@ -78,6 +81,8 @@ func main() {
 		if err != nil {
 			return c.Status(fiber.ErrBadRequest.Code).SendString(err.Error())
 		}
+
+		kafkaWriter.WriteBatch(c.Context(), tweet)
 
 		followers, _ := followerService.Followers(c.Context(), tweet.Author)
 		for _, follower := range followers {
